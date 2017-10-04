@@ -9,6 +9,7 @@ using Quartz;
 using Quartz.Impl;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
 namespace DataReaper
@@ -27,6 +28,7 @@ namespace DataReaper
             Configuration = builder.Build();
             
             var serviceProvider = new ServiceCollection()
+                .WithLogging()
                 .AddTransient<IBankInfoRepository, BankInfoRepository>()
                 .AddTransient<IMongoDatabase>((x) =>
                 {
@@ -38,22 +40,18 @@ namespace DataReaper
                 .AddSingleton<IConfiguration>(Configuration)
                 .AddTransient<IJob, DataReaperJob>()
                 .AddTransient<JobFactory>(x => new JobFactory(x))
-                .AddTransient<IScheduler>(x =>
-                {
-                    IScheduler sched = new StdSchedulerFactory().GetScheduler().Result;
-                    sched.Start();
-                    sched.JobFactory = x.GetService<JobFactory>();
-                    return sched;
-                }).BuildServiceProvider();
+                .WithSheduler()
+                .BuildServiceProvider();
 
             var delayMinutesString = Configuration[DelayMinutesConfigName];
             int.TryParse(delayMinutesString, out int delayMinutes);
-            var scheduler = serviceProvider.GetService<IScheduler>();            
+            var scheduler = serviceProvider.GetService<IScheduler>();
+
             scheduler.ScheduleJob(
                 JobBuilder.Create<IJob>().Build(),
                 TriggerBuilder.Create().WithSimpleSchedule(s => s.WithIntervalInMinutes(delayMinutes).RepeatForever()).Build());
             scheduler.Start();
-            Console.WriteLine("Application started...");
+
             Console.ReadLine();
         }
     }
