@@ -15,10 +15,9 @@ namespace BankDictionary.Controllers
         }
         
         [HttpGet]
-        public async Task<IActionResult> Search(string bik)
+        public async Task<BankInfo[]> Search(string bik)
         {
-            var result = await _bankInfoSearchService.SearchAsync(bik);
-            return Json(result);
+            return await _bankInfoSearchService.SearchAsync(bik);            
         }
     }
 }
