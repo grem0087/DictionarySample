@@ -32,7 +32,7 @@ namespace XUnitTest
         public async Task FindPart()
         {
             var bik = "001";
-            _repository.Setup(repository => repository.FindAsync("001")).Returns( Task.Run(() => new BankInfo[] { }));
+            _repository.Setup(repository => repository.FindAsync("001")).Returns(Task.FromResult(new BankInfo[0]));
             await service.SearchAsync(bik);
             _repository.Verify(repository=> repository.FindAsync("001"));
         }
@@ -41,7 +41,7 @@ namespace XUnitTest
         public async Task FindAll ()
         {
             var bik = "044257464";
-            _repository.Setup(repository => repository.GetAsync("044257464")).Returns(Task.Run(() => new BankInfo()));
+            _repository.Setup(repository => repository.GetAsync("044257464")).Returns(Task.FromResult(new BankInfo()));
             await service.SearchAsync(bik);
             _repository.Verify(repository => repository.GetAsync("044257464"));
         }
