@@ -18,41 +18,51 @@ namespace DataReaper
     {
         private const string DelayMinutesConfigName = "DelayMinutes";
         public static IConfiguration Configuration;
+        public static IServiceProvider ServiceProvider;
+        public static IScheduler Scheduler;
 
         static void Main(string[] args)
+        {
+            StartConfigurationBuilder();
+            StartServiceProvider();
+            InitializeSceduler();
+            Scheduler.Start();
+
+            Console.ReadLine();
+        }
+
+        private static void InitializeSceduler()
+        {
+            var delayMinutesString = Configuration[DelayMinutesConfigName];
+            int.TryParse(delayMinutesString, out int delayMinutes);
+            Scheduler = ServiceProvider.GetService<IScheduler>();
+            Scheduler.ScheduleJob(
+                JobBuilder.Create<IJob>().Build(),
+                TriggerBuilder.Create().WithSimpleSchedule(s => s.WithIntervalInMinutes(delayMinutes).RepeatForever()).Build());            
+        }
+
+        private static void StartConfigurationBuilder()
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json");
 
             Configuration = builder.Build();
-            
-            var serviceProvider = new ServiceCollection()
+        }
+
+        private static void StartServiceProvider()
+        {
+            ServiceProvider = new ServiceCollection()
+                .Configure<DbConfig>(options => Configuration.GetSection("DbConfig").Bind(options))
                 .WithLogging()
                 .AddTransient<IBankInfoRepository, BankInfoRepository>()
-                .AddTransient<IMongoDatabase>((x) =>
-                {
-                    var connectionString = Configuration["ConnectionString"];
-                    var databaseName = Configuration["Database"];
-                    return new MongoClient(connectionString).GetDatabase(databaseName);
-                })
+                .WithMongo()
                 .AddTransient<IHttpDataRequest, HttpDataRequest>()
                 .AddSingleton<IConfiguration>(Configuration)
                 .AddTransient<IJob, DataReaperJob>()
                 .AddTransient<JobFactory>(x => new JobFactory(x))
                 .WithSheduler()
                 .BuildServiceProvider();
-
-            var delayMinutesString = Configuration[DelayMinutesConfigName];
-            int.TryParse(delayMinutesString, out int delayMinutes);
-            var scheduler = serviceProvider.GetService<IScheduler>();
-
-            scheduler.ScheduleJob(
-                JobBuilder.Create<IJob>().Build(),
-                TriggerBuilder.Create().WithSimpleSchedule(s => s.WithIntervalInMinutes(delayMinutes).RepeatForever()).Build());
-            scheduler.Start();
-
-            Console.ReadLine();
         }
     }
 }

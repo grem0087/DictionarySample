@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text;
 using BankDictionary.Internal;
-using BankDictionary.Internal.Config;
 using BankDictionary.Internal.Extensions;
 using BankDictionary.Services;
 using BankDictionary.Services.Interfaces;

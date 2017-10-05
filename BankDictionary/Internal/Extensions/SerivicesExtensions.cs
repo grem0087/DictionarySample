@@ -1,6 +1,6 @@
 ﻿using System;
-using BankDictionary.Internal.Config;
 using Consul;
+using Database.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
