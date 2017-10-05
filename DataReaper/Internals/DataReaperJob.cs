@@ -26,7 +26,7 @@ namespace DataReaper.Internals
             _logger = logger;
         }
 
-        async Task IJob.Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
             var cbrUrl = _configuration[CbrUrl];            
             var resultString = await _httpDataRequest.GetStringAsync(cbrUrl);
