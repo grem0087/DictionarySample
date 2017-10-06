@@ -28,11 +28,18 @@ namespace DataReaper.Internals
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var cbrUrl = _configuration[CbrUrl];            
-            var resultString = await _httpDataRequest.GetStringAsync(cbrUrl);
-            _logger.LogInformation(resultString);
-            var resultObject = JsonConvert.DeserializeObject<BankInfo[]>(resultString);
-            await _bankInfoRepository.AddManyAsync(resultObject);
+            try
+            {
+                var cbrUrl = _configuration[CbrUrl];
+                var resultString = await _httpDataRequest.GetStringAsync(cbrUrl);
+                _logger.LogInformation(resultString);
+                var resultObject = JsonConvert.DeserializeObject<BankInfo[]>(resultString);
+                await _bankInfoRepository.AddManyAsync(resultObject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex.Message);
+            }
         }
     }
 }
